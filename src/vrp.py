@@ -8,14 +8,14 @@ import numpy as np
 #############################################################################################################
 # Constants
 #############################################################################################################
-number_of_customer = 8
+number_of_customer = 32
 population_size = 5
-gene_size = 4
+gene_size = 16
 cromossome_size = int(number_of_customer / gene_size)
-generations = 1
-print_step = 1
+generations = 2000
+print_step = 100
 depot_coordinate = np.array((0, 0))
-customer_coordinates = np.random.randint(-20, 20, size=(number_of_customer, 2))
+customer_coordinates = np.random.randint(-200, 200, size=(number_of_customer, 2))
 
 #############################################################################################################
 # Fitness function - distance
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     chromosomes = GA.populate(population_size, cromossome_size, gene_size, number_of_customer)
 
     # plot chart with chromossome 0
-    # GA.plotDistances(customer_coordinates, depot_coordinate, chromosomes[0])
+    GA.plotDistances(customer_coordinates, depot_coordinate, chromosomes[0])
 
     # loop
     for epoch in range(0, generations):
@@ -85,10 +85,13 @@ if __name__ == "__main__":
         chromosomes = GA.crossover(chromosomes, number_of_customer, gene_size)
 
         # apply mutation
-        # chromosomes = GA.mutation(chromosomes)
+        chromosomes = GA.mutation(chromosomes, number_of_customer)
 
         # print population
         if epoch % print_step == 0:
             for chromosome in chromosomes:
                 print(fitness(chromosome), end=" ")
             print('')
+
+    # plot chart with chromossome 0
+    GA.plotDistances(customer_coordinates, depot_coordinate, chromosomes[0])

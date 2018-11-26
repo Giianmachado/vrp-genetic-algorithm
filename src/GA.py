@@ -154,7 +154,8 @@ def crossover(chromosomes, number_of_customer, gene_size):
 
             # set cross values
             chromosomes[positions[0]], chromosomes[positions[1]] = crossValues(
-                chromosomes[positions[0]], chromosomes[positions[1]], number_of_customer, gene_size
+                chromosomes[positions[0]], chromosomes[positions[1]
+                                                       ], number_of_customer, gene_size
             )
 
         # pop and append selected
@@ -214,21 +215,31 @@ def crossValues(chromosome1, chromosome2, number_of_customer, gene_size):
 #############################################################################################################
 # Mutation
 #############################################################################################################
-def mutation(chromosomes):
+def mutation(chromosomes, number_of_customer):
 
     for a in range(len(chromosomes)):
-        for b in range(len(chromosomes[a])):
-            for c in range(len(chromosomes[a][b])):
 
-                # get probability
-                prob = random.randint(1, 101)
+        # get probability
+        prob = random.randint(1, 101)
 
-                # if prob is == 1 realize mutation
-                if prob < 5:
-                    if chromosomes[a][b][c] == 0:
-                        chromosomes[a][b][c] = 1
-                    else:
-                        chromosomes[a][b][c] = 0
+        # if prob is == 1 realize mutation
+        if prob < 6:
+
+            # get cut positions
+            positions = random.sample(range(1, number_of_customer-1), 2)
+
+            # sort postions
+            positions.sort()
+
+            # concatenate
+            concatenated_chromosome = list(itertools.chain.from_iterable(chromosomes[a]))
+
+            # get and reverse range
+            reversed_interval = concatenated_chromosome[positions[0]:(positions[1] + 1)].copy()
+            reversed_interval.reverse()
+
+            # set reversed interval
+            concatenated_chromosome[positions[0]:(positions[1] + 1)] = reversed_interval
 
     # return
     return chromosomes
