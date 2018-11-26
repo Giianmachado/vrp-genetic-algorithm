@@ -5,25 +5,97 @@
 import numpy as np
 import random
 import itertools
+import matplotlib.pyplot as plt
+
+#############################################################################################################
+# Random population
+#############################################################################################################
+def createShuffleArange(arange):
+    arange = np.arange(arange)
+    np.random.shuffle(arange)
+    return arange
 
 
 #############################################################################################################
 # Random population
 #############################################################################################################
-def populate(population_size, chromossome_size, gene_size):
+def populate(population_size, chromossome_size, gene_size, number_of_customer):
 
-    # Defining the population size.
-    # The population will have population_size chromosome where each chromosome has chromossome_size genes.
-    print(population_size)
-    print(chromossome_size)
-    print(gene_size)
-    pop_size = (population_size, chromossome_size, gene_size)
+    # initialize pop
+    return np.array([ 
+            np.reshape(createShuffleArange(number_of_customer), (gene_size, chromossome_size))
+            for i in range(population_size)
+    ])
 
-    # Creating the initial population.
-    new_population = np.random.randint(2, size=pop_size)
 
-    # return
-    return new_population
+#############################################################################################################
+# Euclidean Distance
+#############################################################################################################
+def distance(a, b):
+    return np.linalg.norm(a-b)
+
+
+#############################################################################################################
+# Plot distances
+#############################################################################################################
+def plotDistances(customer_coordinates, depot_coordinate, chromosome):
+
+    # get x and y coordinates
+    x, y = customer_coordinates.T
+
+    # get x and y depot coordinates
+    x_depot, y_depot = depot_coordinate.T
+
+    # scatter x and y
+    plt.scatter(x, y, color='b')
+
+    # scatter x_depot and y_depot
+    plt.scatter(x_depot, y_depot, color='r')
+
+    # define grid properties
+    plt.grid(color='grey', linestyle='-', linewidth=0.1)
+
+    # connect customers
+    # get individual
+    for i in range(len(chromosome)):
+
+        # initialize
+        x_connect = np.array([])
+        y_connect = np.array([])
+
+        # append depot
+        x_connect = np.append(x_connect, x_depot)
+        y_connect = np.append(y_connect, y_depot)
+
+        # get gene
+        for y in range(len(chromosome[i])):
+
+            # get customers coordinates
+            customer_coordinate = customer_coordinates[chromosome[i][y]]
+
+            # append values
+            x_connect = np.append(x_connect, customer_coordinate[0])
+            y_connect = np.append(y_connect, customer_coordinate[1])
+
+        # append depot
+        x_connect = np.append(x_connect, x_depot)
+        y_connect = np.append(y_connect, y_depot)
+
+        # random color function
+        r = lambda: random.randint(0,255)
+
+        # set connections
+        plt.plot(x_connect, y_connect, color='#%02X%02X%02X' % (r(),r(),r()))
+
+    # show
+    return plt.show()
+
+
+#############################################################################################################
+# plotDistances
+#############################################################################################################
+def binToInt(arr):
+    return np.array(arr).dot(2**np.arange(np.array(arr).size)[::-1])
 
 
 #############################################################################################################

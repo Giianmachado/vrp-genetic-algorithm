@@ -9,24 +9,27 @@ import numpy as np
 # Constants
 #############################################################################################################
 number_of_customer = 8
-number_of_customers_by_route = 4
 population_size = 5
-cromossome_size = int(number_of_customer / number_of_customers_by_route)
-gene_size = 3
+gene_size = 4
+cromossome_size = int(number_of_customer / gene_size)
 generations = 1
 print_step = 1
-
+depot_coordinate = np.array((0, 0))
+customer_coordinates = np.random.randint(-20, 20, size=(number_of_customer, 2))
 
 #############################################################################################################
-# Fitness function - x^2
+# Fitness function - distance
 #############################################################################################################
 def fitness(x):
-    # total = 0
-    # for i in range(len(x)):
-    #     value = np.array(x[i]).dot(2**np.arange(np.array(x[i]).size)[::-1])
-    #     total = total + (i * (value ** 4))
-    # return total
-    return 0
+
+    # distância percorrida pelo entregador
+    total = 0
+
+    # loop
+    for i in range(len(x)):
+        total = total + (i * (x[i] ** 4))
+
+    return total
 
 
 #############################################################################################################
@@ -35,32 +38,37 @@ def fitness(x):
 if __name__ == "__main__":
 
     # initial population
-    chromosomes = GA.populate(population_size, cromossome_size, gene_size)
+    chromosomes = GA.populate(population_size, cromossome_size, gene_size, number_of_customer)
 
-    # loop
-    for epoch in range(0, generations):
+    # plot chart with chromossome 0
+    GA.plotDistances(customer_coordinates, depot_coordinate, chromosomes[0])
 
-        # log epoch
-        if epoch % print_step == 0:
-            print("Epoch: " + str(epoch))
+    # test fitness
 
-        # print population
-        if epoch % print_step == 0:
-            for chromosome in chromosomes:
-                print(fitness(chromosome), end=" ")
-            print('')
+    # # loop
+    # for epoch in range(0, generations):
 
-        # selection by roullete
-        # chromosomes = GA.selectionByTournament(chromosomes, fitness, False)
+    #     # log epoch
+    #     if epoch % print_step == 0:
+    #         print("Epoch: " + str(epoch))
 
-        # apply crossover
-        # chromosomes = GA.crossover(chromosomes, gene_size)
+    #     # print population
+    #     if epoch % print_step == 0:
+    #         for chromosome in chromosomes:
+    #             print(fitness(chromosome), end=" ")
+    #         print('')
 
-        # apply mutation
-        # chromosomes = GA.mutation(chromosomes)
+    #     # selection by roullete
+    #     # chromosomes = GA.selectionByTournament(chromosomes, fitness, False)
 
-        # print population
-        # if epoch % print_step == 0:
-        #     for chromosome in chromosomes:
-        #         print(fitness(chromosome), end=" ")
-        #     print('')
+    #     # apply crossover
+    #     # chromosomes = GA.crossover(chromosomes, gene_size)
+
+    #     # apply mutation
+    #     # chromosomes = GA.mutation(chromosomes)
+
+    #     # print population
+    #     # if epoch % print_step == 0:
+    #     #     for chromosome in chromosomes:
+    #     #         print(fitness(chromosome), end=" ")
+    #     #     print('')
