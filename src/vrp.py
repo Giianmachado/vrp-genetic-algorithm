@@ -63,7 +63,7 @@ if __name__ == "__main__":
     chromosomes = GA.populate(population_size, cromossome_size, gene_size, number_of_customer)
 
     # plot chart with chromossome 0
-    # GA.plotDistances(customer_coordinates, depot_coordinate, chromosomes[0])
+    GA.plotDistances(customer_coordinates, depot_coordinate, chromosomes[0])
 
     # test fitness
     print(fitness(chromosomes[0]))
