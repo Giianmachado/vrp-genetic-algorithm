@@ -94,7 +94,7 @@ def plotDistances(customer_coordinates, depot_coordinate, chromosome):
 #############################################################################################################
 # Select by Tournament
 #############################################################################################################
-def selectionByTournament(chromosomes, fitness, maximize):
+def selectionByTournament(chromosomes, fitness):
 
     # get length
     length = len(chromosomes)
@@ -105,31 +105,21 @@ def selectionByTournament(chromosomes, fitness, maximize):
     # get sum of values
     for _ in range(0, length):
 
-        # compare
-        if maximize == True:
-            value = np.zeros(length)
-        else:
-            value = np.ones(length)
+        # get random positions
+        positions = random.sample(range(0, length), 3)
 
-        compare = []
-        compare.append(value)
+        # define gene to compare
+        compare = chromosomes[positions[0]]
 
         # loop
-
-        # maximize
-        if maximize == True:
-            for position in random.sample(range(0, length), 3):
-                if fitness(chromosomes[position]) > fitness(compare):
-                    compare = chromosomes[position]
-        else:
-            for position in random.sample(range(0, length), 3):
-                if fitness(chromosomes[position]) < fitness(compare):
-                    compare = chromosomes[position]
+        for position in positions:
+            if fitness(chromosomes[position]) < fitness(compare):
+                compare = chromosomes[position]
 
         # append selected
         result.append(compare)
 
-    # return
+    # # return
     return result
 
 
