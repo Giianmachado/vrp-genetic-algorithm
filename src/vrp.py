@@ -20,15 +20,37 @@ customer_coordinates = np.random.randint(-20, 20, size=(number_of_customer, 2))
 #############################################################################################################
 # Fitness function - distance
 #############################################################################################################
-def fitness(x):
+def fitness(chromosome):
 
     # distância percorrida pelo entregador
     total = 0
 
-    # loop
-    for i in range(len(x)):
-        total = total + (i * (x[i] ** 4))
+    # get gene
+    for i in range(len(chromosome)):
 
+        # initialize
+        routes = []
+
+        # append depot coordinate
+        routes.append(depot_coordinate)
+
+        # get customer
+        for y in range(len(chromosome[i])):
+
+            # get customers coordinates
+            customer_coordinate = customer_coordinates[chromosome[i][y]]
+
+            # append customer coordinate
+            routes.append(customer_coordinate)
+
+        # append depot coordinate
+        routes.append(depot_coordinate)
+
+    # calc distance
+    for i in range(len(routes) -1):
+        total = total + GA.distance(routes[i], routes[i + 1])
+
+    # return value
     return total
 
 
@@ -41,9 +63,10 @@ if __name__ == "__main__":
     chromosomes = GA.populate(population_size, cromossome_size, gene_size, number_of_customer)
 
     # plot chart with chromossome 0
-    GA.plotDistances(customer_coordinates, depot_coordinate, chromosomes[0])
+    # GA.plotDistances(customer_coordinates, depot_coordinate, chromosomes[0])
 
     # test fitness
+    print(fitness(chromosomes[0]))
 
     # # loop
     # for epoch in range(0, generations):
