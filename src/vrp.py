@@ -82,7 +82,7 @@ if __name__ == "__main__":
         chromosomes = GA.selectionByTournament(chromosomes, fitness)
 
         # apply crossover
-        # chromosomes = GA.crossover(chromosomes, gene_size)
+        chromosomes = GA.crossover(chromosomes, number_of_customer, gene_size)
 
         # apply mutation
         # chromosomes = GA.mutation(chromosomes)
