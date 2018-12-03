@@ -8,14 +8,25 @@ import numpy as np
 #############################################################################################################
 # Constants
 #############################################################################################################
-number_of_customer = 32
-population_size = 50
-gene_size = 16
+number_of_customer = 8
+population_size = 10
+gene_size = 4
 cromossome_size = int(number_of_customer / gene_size)
 generations = 10001
-print_step = 1000
+print_step = 100
 depot_coordinate = np.array((0, 0))
-customer_coordinates = np.random.randint(-200, 200, size=(number_of_customer, 2))
+# customer_coordinates = np.random.randint(-20, 20, size=(number_of_customer, 2))
+customer_coordinates = np.array([
+    [10, -20],
+    [15, 15],
+    [30, -18],
+    [40, -10],
+    [-35, -20],
+    [10, 30],
+    [5, 5],
+    [2, 9],
+])
+print(customer_coordinates)
 
 
 #############################################################################################################
@@ -30,10 +41,10 @@ def fitness(chromosome):
     for i in range(len(chromosome)):
 
         # initialize
-        routes = []
+        routes = np.array([])
 
         # append depot coordinate
-        routes.append(depot_coordinate)
+        routes = np.append(routes, depot_coordinate)
 
         # get customer
         for y in range(len(chromosome[i])):
@@ -42,14 +53,14 @@ def fitness(chromosome):
             customer_coordinate = customer_coordinates[chromosome[i][y]]
 
             # append customer coordinate
-            routes.append(customer_coordinate)
+            routes = np.append(routes, customer_coordinate)
 
         # append depot coordinate
-        routes.append(depot_coordinate)
+        routes = np.append(routes, depot_coordinate)
 
-    # calc distance
-    for i in range(len(routes) -1):
-        total = total + GA.distance(routes[i], routes[i + 1])
+        # calc distance
+        for i in range(len(routes) - 1):
+            total = total + GA.distance(routes[i], routes[i + 1])
 
     # return value
     return total
