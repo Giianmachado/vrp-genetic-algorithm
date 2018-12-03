@@ -7,11 +7,10 @@ import random
 import itertools
 import matplotlib.pyplot as plt
 
+
 #############################################################################################################
 # Random population
 #############################################################################################################
-
-
 def createShuffleArange(arange):
     arange = np.arange(arange)
     np.random.shuffle(arange)
@@ -22,11 +21,10 @@ def createShuffleArange(arange):
 # Random population
 #############################################################################################################
 def populate(population_size, chromossome_size, gene_size, number_of_customer):
-
     # initialize pop
     return np.array([
         np.reshape(createShuffleArange(number_of_customer),
-                   (gene_size, chromossome_size))
+                   (chromossome_size, gene_size))
         for i in range(population_size)
     ])
 
@@ -129,7 +127,7 @@ def selectionByTournament(chromosomes, fitness):
 #############################################################################################################
 # Crossover
 #############################################################################################################
-def crossover(chromosomes, number_of_customer, gene_size):
+def crossover(chromosomes, number_of_customer):
     # get len
     length = len(chromosomes)
 
@@ -155,7 +153,7 @@ def crossover(chromosomes, number_of_customer, gene_size):
             # set cross values
             chromosomes[positions[0]], chromosomes[positions[1]] = crossValues(
                 chromosomes[positions[0]], chromosomes[positions[1]
-                                                       ], number_of_customer, gene_size
+                                                       ], number_of_customer
             )
 
         # pop and append selected
@@ -176,40 +174,55 @@ def crossover(chromosomes, number_of_customer, gene_size):
 #############################################################################################################
 # Crossover
 #############################################################################################################
-def crossValues(chromosome1, chromosome2, number_of_customer, gene_size):
+def crossValues(chromosome1, chromosome2, number_of_customer):
+
+    # get length
+    length = len(chromosome1)
 
     # get cut point
     positions = random.sample(range(0, number_of_customer), 3)
 
     # concat values
-    concatenated_chromosome1 = list(itertools.chain.from_iterable(chromosome1))
-    concatenated_chromosome2 = list(itertools.chain.from_iterable(chromosome2))
+    concatenated_chromosome1 = np.array(list(itertools.chain.from_iterable(chromosome1)))
+    concatenated_chromosome2 = np.array(list(itertools.chain.from_iterable(chromosome2)))
 
     # sort positions
     positions.sort()
 
     # change gene 1
-    aux = concatenated_chromosome1.copy()
-    concatenated_chromosome1[positions[0]] = aux[positions[2]]
-    concatenated_chromosome1[positions[1]] = aux[positions[0]]
-    concatenated_chromosome1[positions[2]] = aux[positions[1]]
-
-    # change gene 2
-    aux = concatenated_chromosome2.copy()
-    concatenated_chromosome2[positions[0]] = aux[positions[2]]
-    concatenated_chromosome2[positions[1]] = aux[positions[0]]
-    concatenated_chromosome2[positions[2]] = aux[positions[1]]
-
-    # concat values
-    concatenated_chromosome1 = np.array(concatenated_chromosome1)
-    concatenated_chromosome2 = np.array(concatenated_chromosome2)
+    a = reorder(np.copy(concatenated_chromosome1), np.copy(concatenated_chromosome2), positions)
+    
+    # change gene 1
+    b = reorder(np.copy(concatenated_chromosome2), np.copy(concatenated_chromosome1), positions)
 
     # calc best divisor
-    if len(concatenated_chromosome2) % gene_size != 0:
+    if len(concatenated_chromosome2) % length != 0:
         return chromosome1, chromosome2
-
+        
     # return
-    return np.split(concatenated_chromosome1, gene_size), np.split(concatenated_chromosome2, gene_size)
+    return np.array(np.split(a, length)), np.array(np.split(b, length))
+
+
+#############################################################################################################
+# Reorder array
+#############################################################################################################
+def reorder(a, b, p):
+    # new positions
+    p2 = np.array([0, 0, 0])
+
+    # get indexes from another array
+    for i in range(len(p)):
+        p2[i] = list(b).index(a[p[i]])
+
+    # sort indexes
+    p2.sort()
+
+    # change values by index
+    for i in range(len(p)):
+        a[p[i]] = b[p2[i]]
+
+    # return 
+    return a
 
 
 #############################################################################################################
@@ -225,6 +238,9 @@ def mutation(chromosomes, number_of_customer):
         # if prob is == 1 realize mutation
         if prob < 6:
 
+            # get len
+            length = len(chromosomes[a])
+
             # get cut positions
             positions = random.sample(range(1, number_of_customer-1), 2)
 
@@ -232,14 +248,19 @@ def mutation(chromosomes, number_of_customer):
             positions.sort()
 
             # concatenate
-            concatenated_chromosome = list(itertools.chain.from_iterable(chromosomes[a]))
+            concatenated_chromosome = np.array(list(itertools.chain.from_iterable(chromosomes[a])))
 
             # get and reverse range
-            reversed_interval = concatenated_chromosome[positions[0]:(positions[1] + 1)].copy()
-            reversed_interval.reverse()
+            reversed_interval = np.copy(concatenated_chromosome)[positions[0]:(positions[1] + 1)]
+
+            # reverse values
+            reversed_interval, = np.fliplr([reversed_interval])
 
             # set reversed interval
             concatenated_chromosome[positions[0]:(positions[1] + 1)] = reversed_interval
+
+            # set new value
+            chromosomes[a] = np.array(np.split(concatenated_chromosome, length))
 
     # return
     return chromosomes
