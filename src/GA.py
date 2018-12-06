@@ -6,6 +6,7 @@ import numpy as np
 import random
 import itertools
 import matplotlib.pyplot as plt
+import copy
 
 
 #############################################################################################################
@@ -103,16 +104,15 @@ def selectionByTournament(chromosomes, fitness):
     # declare result
     result = []
 
-    # the best
+    # define best
     best = chromosomes[0]
 
-    # get best chromosome
-    for i in range(0, length):
-        if fitness(chromosomes[i]) < fitness(best):
-                best = chromosomes[i]
-
-    # append the best
-    # append selected
+    # loop
+    for chromosome in chromosomes:
+        if fitness(chromosome) < fitness(best):
+            best = chromosome
+    
+    # append
     result.append(best)
 
     # get sum of values
@@ -133,7 +133,7 @@ def selectionByTournament(chromosomes, fitness):
         result.append(compare)
 
     # # return
-    return result
+    return np.array(result)
 
 
 #############################################################################################################
@@ -146,37 +146,39 @@ def crossover(chromosomes, number_of_customer):
     # declare result
     result = []
 
+    # if par
+    if length % 2 == 0:
+        length = int(length / 2)
+    else:
+        result.append(chromosomes[0])
+        np.delete(chromosomes, 0)
+        length = int((length - 1) / 2)
+
     # while len more than 1
-    while length > 0:
+    for _ in range(length):
 
         # get two random positions
-        if length > 1:
-            positions = random.sample(range(0, length), 2)
-        else:
-            result.append(chromosomes[0])
-            break
+        positions = random.sample(range(0, length), 2)
 
         # get probability
         prob = random.randint(1, 101)
 
         # if prob is < 90 realize crossover
-        if prob < 90:
+        if prob < 95:
 
-            chromosomes[positions[0]], chromosomes[positions[1]] = obx(
-                    chromosomes[positions[0]
-                                ], chromosomes[positions[1]], number_of_customer
-                )
+            aa, bb = obx(
+                copy.deepcopy(chromosomes[positions[0]]), copy.deepcopy(chromosomes[positions[1]]), number_of_customer
+            )
 
-        # pop and append selected
-        result.append(chromosomes[positions[0]])
-        result.append(chromosomes[positions[1]])
+            # pop and append selected
+            result.append(aa)
+            result.append(bb)
 
-        # pop values
-        chromosomes = [i for j, i in enumerate(
-            chromosomes) if j not in positions]
+        else:
 
-        # get len
-        length = len(chromosomes)
+            # pop and append selected
+            result.append(chromosomes[positions[0]])
+            result.append(chromosomes[positions[1]])
 
     # return
     return result
@@ -191,16 +193,13 @@ def obx(chromosome1, chromosome2, number_of_customer):
     length = len(chromosome1)
 
     # get cut point
-    positions = random.sample(range(0, number_of_customer), int(number_of_customer / 2) + 1)
+    positions = random.sample(range(0, number_of_customer), 3)
 
     # concat values
     concatenated_chromosome1 = np.array(
         list(itertools.chain.from_iterable(chromosome1)))
     concatenated_chromosome2 = np.array(
         list(itertools.chain.from_iterable(chromosome2)))
-
-    if np.array_equal(concatenated_chromosome1, concatenated_chromosome2):
-        np.random.shuffle(concatenated_chromosome2)
 
     # sort positions
     positions.sort()
@@ -244,14 +243,18 @@ def pmx(chromosome1, chromosome2, number_of_customer):
     cuts_points.sort()
 
     # concat values
-    concatenated_gene1 = np.array(list(itertools.chain.from_iterable(chromosome1)))
-    concatenated_gene2 = np.array(list(itertools.chain.from_iterable(chromosome2)))
+    concatenated_gene1 = np.array(
+        list(itertools.chain.from_iterable(chromosome1)))
+    concatenated_gene2 = np.array(
+        list(itertools.chain.from_iterable(chromosome2)))
 
     # first child
-    a = changePosition(np.copy(concatenated_gene1), np.copy(concatenated_gene2), cuts_points)
+    a = changePosition(np.copy(concatenated_gene1),
+                       np.copy(concatenated_gene2), cuts_points)
 
     # second child
-    b = changePosition(np.copy(concatenated_gene2), np.copy(concatenated_gene1), cuts_points)
+    b = changePosition(np.copy(concatenated_gene2),
+                       np.copy(concatenated_gene1), cuts_points)
 
     # calc best divisor
     if len(concatenated_gene2) % length != 0:
@@ -314,7 +317,7 @@ def reorder(a, b, p):
 #############################################################################################################
 # Mutation
 #############################################################################################################
-def mutation(chromosomes, number_of_customer):
+def mutation(chromosomes, number_of_customer, operator):
 
     for a in range(len(chromosomes)):
 
@@ -327,26 +330,57 @@ def mutation(chromosomes, number_of_customer):
             # get len
             length = len(chromosomes[a])
 
-            # get cut positions
-            positions = random.sample(range(0, number_of_customer), 2)
+            # if operator cross
+            if operator == 'exchange':
 
-            # sort postions
-            positions.sort()
+                # get cut positions
+                positions = random.sample(range(0, number_of_customer), 2)
 
-            # concatenate
-            concatenated_chromosome = np.array(list(itertools.chain.from_iterable(chromosomes[a])))
+                # sort postions
+                positions.sort()
 
-            # get and reverse range
-            aux = np.copy(concatenated_chromosome)[positions[0]]
+                # concatenate
+                concatenated_chromosome = np.array(
+                    list(itertools.chain.from_iterable(chromosomes[a])))
 
-            # set reversed interval
-            concatenated_chromosome[positions[0]] = concatenated_chromosome[positions[1]]
+                # get and reverse range
+                aux = np.copy(concatenated_chromosome)[positions[0]]
 
-            # set seconda value
-            concatenated_chromosome[positions[1]] = aux
+                # set reversed interval
+                concatenated_chromosome[positions[0]
+                                        ] = concatenated_chromosome[positions[1]]
 
-            # set new value
-            chromosomes[a] = np.array(np.split(concatenated_chromosome, length))
+                # set seconda value
+                concatenated_chromosome[positions[1]] = aux
+
+                # set new value
+                chromosomes[a] = np.array(
+                    np.split(concatenated_chromosome, length))
+
+            # if reverse
+            elif operator == 'inversion':
+
+                # get cut positions
+                positions = random.sample(range(1, number_of_customer - 1), 2)
+
+                # sort postions
+                positions.sort()
+
+                # concatenate
+                concatenated_chromosome = np.array(
+                    list(itertools.chain.from_iterable(chromosomes[a])))
+
+                # get and reverse range
+                aux = np.copy(concatenated_chromosome)[
+                    positions[0]:(positions[1] + 1)]
+
+                # set seconda value
+                concatenated_chromosome[positions[0]:(
+                    positions[1] + 1)], = np.fliplr([aux])
+
+                # set new value
+                chromosomes[a] = np.array(
+                    np.split(concatenated_chromosome, length))
 
     # return
     return chromosomes
