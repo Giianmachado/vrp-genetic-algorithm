@@ -96,7 +96,7 @@ def plotDistances(customer_coordinates, depot_coordinate, chromosome):
 #############################################################################################################
 # Select by Tournament
 #############################################################################################################
-def selectionByTournament(chromosomes, fitness):
+def selectionByTournament(chromosomes, fitness, tournament_selectors, elitism):
 
     # get length
     length = len(chromosomes)
@@ -119,7 +119,7 @@ def selectionByTournament(chromosomes, fitness):
     for _ in range(0, length - 1):
 
         # get random positions
-        positions = random.sample(range(0, length), 3)
+        positions = random.sample(range(0, length), tournament_selectors)
 
         # define gene to compare
         compare = chromosomes[positions[0]]
@@ -139,7 +139,7 @@ def selectionByTournament(chromosomes, fitness):
 #############################################################################################################
 # Crossover
 #############################################################################################################
-def crossover(chromosomes, number_of_customer):
+def crossover(chromosomes, number_of_customer, crossover_prob, crossover_method):
     # get len
     length = len(chromosomes)
 
@@ -164,11 +164,16 @@ def crossover(chromosomes, number_of_customer):
         prob = random.randint(1, 101)
 
         # if prob is < 90 realize crossover
-        if prob < 95:
+        if prob < (crossover_prob * 100):
 
-            aa, bb = obx(
-                copy.deepcopy(chromosomes[positions[0]]), copy.deepcopy(chromosomes[positions[1]]), number_of_customer
-            )
+            if crossover_method == 'pmx':
+                aa, bb = pmx(
+                    copy.deepcopy(chromosomes[positions[0]]), copy.deepcopy(chromosomes[positions[1]]), number_of_customer
+                )
+            else:
+                aa, bb = obx(
+                    copy.deepcopy(chromosomes[positions[0]]), copy.deepcopy(chromosomes[positions[1]]), number_of_customer
+                )
 
             # pop and append selected
             result.append(aa)
@@ -317,7 +322,7 @@ def reorder(a, b, p):
 #############################################################################################################
 # Mutation
 #############################################################################################################
-def mutation(chromosomes, number_of_customer, operator):
+def mutation(chromosomes, number_of_customer, mutation_prob, mutation_method):
 
     for a in range(len(chromosomes)):
 
@@ -325,13 +330,13 @@ def mutation(chromosomes, number_of_customer, operator):
         prob = random.randint(1, 101)
 
         # if prob is == 1 realize mutation
-        if prob < 10:
+        if prob < (mutation_prob * 100):
 
             # get len
             length = len(chromosomes[a])
 
             # if operator cross
-            if operator == 'exchange':
+            if mutation_method == 'exchange':
 
                 # get cut positions
                 positions = random.sample(range(0, number_of_customer), 2)
@@ -358,7 +363,7 @@ def mutation(chromosomes, number_of_customer, operator):
                     np.split(concatenated_chromosome, length))
 
             # if reverse
-            elif operator == 'inversion':
+            else:
 
                 # get cut positions
                 positions = random.sample(range(1, number_of_customer - 1), 2)

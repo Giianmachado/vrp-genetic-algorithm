@@ -8,32 +8,69 @@ import numpy as np
 #############################################################################################################
 # Constants
 #############################################################################################################
+
+# number of customer
 number_of_customer = 16
-population_size = 300
+
+# population size
+population_size = 30
+
+# gene size
 gene_size = 4
+
+# cromossome size
 cromossome_size = int(number_of_customer / gene_size)
+
+# number of generations
 generations = 2001
+
+# print step
 print_step = 100
+
+# depot coordinates
 depot_coordinate = np.array((0, 0))
-# customer_coordinates = np.random.randint(-500, 500, size=(number_of_customer, 2))
+
+# tournament selectors
+tournament_selectors = 5
+
+# elitism probability
+elitism_prob = 0.1
+
+# crossover probability
+crossover_prob = 0.95
+
+# crossover method
+# Can be obx or pmx
+# default is obx
+crossover_method = 'obx'
+
+# mutation probability
+mutation_prob = 0.1
+
+# mutation method
+# Can be inversion or exchange
+# default is inversion
+mutation_method = 'exchange'
+
+# customer coordinates
 customer_coordinates = np.array([
-    [ 286,  375],
-    [ -19,  306],
-    [ 345,  372],
-    [ 373,  -65],
-    [ 102, -395],
-    [ 318,  200],
-    [ 102, -182],
-    [ 164,  480],
-    [-281,  -96],
-    [ 298,  320],
-    [-196, -263],
-    [ 107,  111],
-    [  36, -266],
-    [-353,  236],
-    [ 490,  270],
-    [ 420,  404]
+    [ 286,  375],    [ -19,  306],    [ 345,  372],    [ 373,  -65],
+    [ 102, -395],    [ 318,  200],    [ 102, -182],    [ 164,  480],
+    [-281,  -96],    [ 298,  320],    [-196, -263],    [ 107,  111],
+    [  36, -266],    [-353,  236],    [ 490,  270],    [ 420,  404]
 ])
+
+# generate csv file
+csv_file = False
+
+# Plot chart
+plot_chart = True
+
+# verify number of customers
+if number_of_customer == 8:
+    customer_coordinates = customer_coordinates[0:8]
+
+# print all customers
 print(customer_coordinates)
 
 
@@ -94,10 +131,11 @@ def printValues(chromosomes, epoch):
     print(result)
 
     # plot chart with chromossome 0
-    if epoch == 0:
-        GA.plotDistances(customer_coordinates, depot_coordinate, plot)
-    if epoch == (generations-1):
-        GA.plotDistances(customer_coordinates, depot_coordinate, plot)
+    if plot_chart:
+        if epoch == generations:
+            GA.plotDistances(customer_coordinates, depot_coordinate, plot)
+        if epoch == 0:
+            GA.plotDistances(customer_coordinates, depot_coordinate, plot)
 
 
 #############################################################################################################
@@ -123,11 +161,17 @@ if __name__ == "__main__":
     chromosomes = GA.populate(
         population_size, cromossome_size, gene_size, number_of_customer)
 
-    # file object
-    file_object  = open("obx_exchange_16_4.csv", "a")
+    # generate file
+    if csv_file:
+        # file object
+        file_object  = open("obx_exchange_16_4.csv", "a")
 
-    # print first
-    printValuesOnFile(chromosomes, file_object)
+        # print first
+        printValuesOnFile(chromosomes, file_object)
+
+    # if plot chart
+    if plot_chart:
+        printValues(chromosomes, 0)
 
     # loop
     for epoch in range(0, generations):
@@ -137,20 +181,24 @@ if __name__ == "__main__":
             print("Epoch: " + str(epoch))
 
         # selection by roullete
-        chromosomes = GA.selectionByTournament(chromosomes, fitness)
+        chromosomes = GA.selectionByTournament(chromosomes, fitness, tournament_selectors, elitism_prob)
 
         # apply crossover
-        chromosomes = GA.crossover(chromosomes, number_of_customer)
+        chromosomes = GA.crossover(chromosomes, number_of_customer, crossover_prob, crossover_method)
 
         # apply mutation
-        chromosomes = GA.mutation(chromosomes, number_of_customer, 'exchange')
+        chromosomes = GA.mutation(chromosomes, number_of_customer, mutation_prob, mutation_method)
 
         # print population
         if epoch % print_step == 0:
-            printValues(chromosomes, epoch)
+            printValues(chromosomes, epoch + 1)
 
-        # print first
-        printValuesOnFile(chromosomes, file_object)
+        # print on file
+        if csv_file:
+            # print first
+            printValuesOnFile(chromosomes, file_object)
 
     # close file
-    file_object.close()
+    if csv_file:
+        # close file
+        file_object.close()
