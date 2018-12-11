@@ -7,27 +7,94 @@ import random
 import itertools
 import matplotlib.pyplot as plt
 import copy
+import math
 
 
 #############################################################################################################
-# Random population
+# shuffle arange
 #############################################################################################################
 def createShuffleArange(arange):
+
+    # create array
     arange = np.arange(arange)
+
+    # shuffle values
     np.random.shuffle(arange)
+
+    # return
     return arange
 
 
 #############################################################################################################
 # Random population
 #############################################################################################################
-def populate(population_size, chromossome_size, gene_size, number_of_customer):
-    # initialize pop
-    return np.array([
-        np.reshape(createShuffleArange(number_of_customer),
-                   (chromossome_size, gene_size))
+def populate(population_size, capacity, customers):
+
+    # initialize
+    chromosomes = np.array([
+        createShuffleArange(len(customers))
         for i in range(population_size)
     ])
+
+    # get new chromossomes
+    chromosomes = separateByCapacity(chromosomes, capacity, customers)
+
+    # return
+    return chromosomes
+
+
+#############################################################################################################
+# Separate routes based on capacity
+#############################################################################################################
+def separateByCapacity(chromosomes, capacity, customers):
+
+    # define result
+    result = []
+
+    # calc gene
+    for chromosome in chromosomes:
+
+        # declare new chromossome
+        new_chromosome = []
+
+        # declare gene
+        gene = []
+
+        # total
+        total = 0
+
+        # loop
+        for index in chromosome:
+
+            # get demand
+            demand = customers[index].get_demand()
+
+            # while total < capacity
+            if (total + demand) > capacity:
+
+                # append new gene
+                new_chromosome.append(gene.copy())
+
+                # total = 0
+                total = 0
+
+                # delete gene
+                del gene[:]
+
+            # sum value
+            total = total + demand
+
+            # append gene
+            gene.append(index)
+
+        # append new gene
+        new_chromosome.append(gene.copy())
+
+        # set new chromossome
+        result.append(new_chromosome)
+
+    # return
+    return result
 
 
 #############################################################################################################
@@ -40,10 +107,11 @@ def distance(a, b):
 #############################################################################################################
 # Plot distances
 #############################################################################################################
-def plotDistances(customer_coordinates, depot_coordinate, chromosome):
+def plotDistances(customers, depot_coordinate, chromosome):
 
     # get x and y coordinates
-    x, y = customer_coordinates.T
+    x = [customer.get_x() for customer in customers]
+    y = [customer.get_y() for customer in customers]
 
     # get x and y depot coordinates
     x_depot, y_depot = depot_coordinate.T
@@ -73,7 +141,8 @@ def plotDistances(customer_coordinates, depot_coordinate, chromosome):
         for y in range(len(chromosome[i])):
 
             # get customers coordinates
-            customer_coordinate = customer_coordinates[chromosome[i][y]]
+            customer_coordinate = customers[chromosome[i]
+                                            [y] - 1].get_position()
 
             # append values
             x_connect = np.append(x_connect, customer_coordinate[0])
@@ -98,25 +167,25 @@ def plotDistances(customer_coordinates, depot_coordinate, chromosome):
 #############################################################################################################
 def selectionByTournament(chromosomes, fitness, tournament_selectors, elitism):
 
-    # get length
-    length = len(chromosomes)
-
     # declare result
     result = []
 
-    # define best
-    best = chromosomes[0]
+    # apply elitism
+    while len(result) < math.floor(elitism * len(chromosomes)) + 1:
+        best = chromosomes[0]
+        pos = 0
+        for i in range(len(chromosomes)):
+            if fitness(chromosomes[i]) < fitness(best):
+                pos = i
+                best = chromosomes[i]
+        result.append(best.copy())
+        chromosomes = np.delete(chromosomes, [pos], axis=0)
 
-    # loop
-    for chromosome in chromosomes:
-        if fitness(chromosome) < fitness(best):
-            best = chromosome
-    
-    # append
-    result.append(best)
+    # get length
+    length = len(chromosomes)
 
     # get sum of values
-    for _ in range(0, length - 1):
+    for _ in range(0, length):
 
         # get random positions
         positions = random.sample(range(0, length), tournament_selectors)
@@ -139,18 +208,35 @@ def selectionByTournament(chromosomes, fitness, tournament_selectors, elitism):
 #############################################################################################################
 # Crossover
 #############################################################################################################
-def crossover(chromosomes, number_of_customer, crossover_prob, crossover_method):
-    # get len
-    length = len(chromosomes)
+def crossover(chromosomes, crossover_prob, crossover_method, capacity, customers, elitism, fitness):
 
     # declare result
     result = []
+
+    # create copy of chromossomes
+    chromosomes_copy = chromosomes.copy()
+
+    # apply elitism
+    while len(result) < math.floor(elitism * len(chromosomes)) + 1:
+        best = chromosomes[0]
+        pos = 0
+        for i in range(len(chromosomes)):
+            if fitness(chromosomes[i]) < fitness(best):
+                pos = i
+                best = chromosomes[i]
+        result.append(
+            np.array(list(itertools.chain.from_iterable(best.copy()))))
+        chromosomes = np.delete(chromosomes, [pos], axis=0)
+
+    # get length
+    length = len(chromosomes)
 
     # if par
     if length % 2 == 0:
         length = int(length / 2)
     else:
-        result.append(chromosomes[0])
+        result.append(
+            np.array(list(itertools.chain.from_iterable(chromosomes[0]))))
         np.delete(chromosomes, 0)
         length = int((length - 1) / 2)
 
@@ -158,44 +244,32 @@ def crossover(chromosomes, number_of_customer, crossover_prob, crossover_method)
     for _ in range(length):
 
         # get two random positions
-        positions = random.sample(range(0, length), 2)
+        positions = random.sample(range(0, len(chromosomes_copy)), 2)
 
-        # get probability
-        prob = random.randint(1, 101)
-
-        # if prob is < 90 realize crossover
-        if prob < (crossover_prob * 100):
-
-            if crossover_method == 'pmx':
-                aa, bb = pmx(
-                    copy.deepcopy(chromosomes[positions[0]]), copy.deepcopy(chromosomes[positions[1]]), number_of_customer
-                )
-            else:
-                aa, bb = obx(
-                    copy.deepcopy(chromosomes[positions[0]]), copy.deepcopy(chromosomes[positions[1]]), number_of_customer
-                )
-
-            # pop and append selected
-            result.append(aa)
-            result.append(bb)
-
+        # make obx
+        if crossover_method == 'pmx':
+            aa, bb = pmx(
+                copy.deepcopy(chromosomes_copy[positions[0]]), copy.deepcopy(
+                    chromosomes_copy[positions[1]]), len(customers)
+            )
         else:
+            aa, bb = obx(
+                copy.deepcopy(chromosomes_copy[positions[0]]), copy.deepcopy(
+                    chromosomes_copy[positions[1]]), len(customers)
+            )
 
-            # pop and append selected
-            result.append(chromosomes[positions[0]])
-            result.append(chromosomes[positions[1]])
+        # append selected
+        result.append(aa.copy())
+        result.append(bb.copy())
 
     # return
-    return result
+    return separateByCapacity(result, capacity, customers)
 
 
 #############################################################################################################
 # Crossover
 #############################################################################################################
 def obx(chromosome1, chromosome2, number_of_customer):
-
-    # get length
-    length = len(chromosome1)
 
     # get cut point
     positions = random.sample(range(0, number_of_customer), 3)
@@ -217,12 +291,8 @@ def obx(chromosome1, chromosome2, number_of_customer):
     b = reorder(np.copy(concatenated_chromosome2),
                 np.copy(concatenated_chromosome1), positions)
 
-    # calc best divisor
-    if len(concatenated_chromosome2) % length != 0:
-        return chromosome1, chromosome2
-
     # return
-    return np.array(np.split(a, length)), np.array(np.split(b, length))
+    return np.array(a), np.array(b)
 
 
 #############################################################################################################
@@ -234,7 +304,7 @@ def pmx(chromosome1, chromosome2, number_of_customer):
     length = len(chromosome1)
 
     # define number of cuts
-    cuts_points_length = (length * 1) + 2
+    cuts_points_length = 3
 
     # get gene_size
     gene_size = int(number_of_customer / length)
@@ -261,12 +331,8 @@ def pmx(chromosome1, chromosome2, number_of_customer):
     b = changePosition(np.copy(concatenated_gene2),
                        np.copy(concatenated_gene1), cuts_points)
 
-    # calc best divisor
-    if len(concatenated_gene2) % length != 0:
-        return chromosome1, chromosome2
-
     # return
-    return np.array(np.split(a, length)), np.array(np.split(b, length))
+    return np.array(a), np.array(b)
 
 
 #############################################################################################################
@@ -322,9 +388,28 @@ def reorder(a, b, p):
 #############################################################################################################
 # Mutation
 #############################################################################################################
-def mutation(chromosomes, number_of_customer, mutation_prob, mutation_method):
+def mutation(chromosomes, mutation_prob, mutation_method, capacity, customers, elitism, fitness):
 
-    for a in range(len(chromosomes)):
+    # declare result
+    result = []
+
+    # apply elitism
+    while len(result) < math.floor(elitism * len(chromosomes)) + 1:
+        best = chromosomes[0]
+        pos = 0
+        for i in range(len(chromosomes)):
+            if fitness(chromosomes[i]) < fitness(best):
+                pos = i
+                best = chromosomes[i]
+        result.append(
+            np.array(list(itertools.chain.from_iterable(best.copy()))))
+        chromosomes = np.delete(chromosomes, [pos], axis=0)
+
+    # get length
+    length = len(chromosomes)
+
+    # loop
+    for a in range(length):
 
         # get probability
         prob = random.randint(1, 101)
@@ -332,14 +417,11 @@ def mutation(chromosomes, number_of_customer, mutation_prob, mutation_method):
         # if prob is == 1 realize mutation
         if prob < (mutation_prob * 100):
 
-            # get len
-            length = len(chromosomes[a])
-
             # if operator cross
             if mutation_method == 'exchange':
 
                 # get cut positions
-                positions = random.sample(range(0, number_of_customer), 2)
+                positions = random.sample(range(0, len(customers)), 2)
 
                 # sort postions
                 positions.sort()
@@ -359,14 +441,13 @@ def mutation(chromosomes, number_of_customer, mutation_prob, mutation_method):
                 concatenated_chromosome[positions[1]] = aux
 
                 # set new value
-                chromosomes[a] = np.array(
-                    np.split(concatenated_chromosome, length))
+                result.append(concatenated_chromosome)
 
             # if reverse
             else:
 
                 # get cut positions
-                positions = random.sample(range(1, number_of_customer - 1), 2)
+                positions = random.sample(range(1, len(customers) - 1), 2)
 
                 # sort postions
                 positions.sort()
@@ -384,8 +465,12 @@ def mutation(chromosomes, number_of_customer, mutation_prob, mutation_method):
                     positions[1] + 1)], = np.fliplr([aux])
 
                 # set new value
-                chromosomes[a] = np.array(
-                    np.split(concatenated_chromosome, length))
+                result.append(concatenated_chromosome)
+        else:
+
+            # append
+            result.append(
+                np.array(list(itertools.chain.from_iterable(chromosomes[a]))))
 
     # return
-    return chromosomes
+    return separateByCapacity(result, capacity, customers)
